@@ -10,3 +10,6 @@ tasks:
     cmds:
       - go tool air
     silent: true
+  db:
+    cmds:
+      - docker compose up
