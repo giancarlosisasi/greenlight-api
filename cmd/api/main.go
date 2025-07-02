@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
@@ -14,6 +19,9 @@ const version = "1.0.0"
 type config struct {
 	port int
 	env  string
+	db   struct {
+		dsn string
+	}
 }
 
 type application struct {
@@ -29,6 +37,19 @@ func main() {
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	// load env vars
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading the .env file")
+	}
+
+	_, err = openDB(cfg)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	logger.Info("database connection pool established!")
 
 	app := application{
 		config: cfg,
@@ -46,7 +67,36 @@ func main() {
 
 	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env)
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	logger.Error(err.Error())
 	os.Exit(1)
+}
+
+func openDB(cfg config) (*pgxpool.Pool, error) {
+	databaseUrl := os.Getenv("DATABASE_URL")
+	pgxConfig, err := pgxpool.ParseConfig(databaseUrl)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to parse database url configuration: %v\n", err)
+		return nil, err
+	}
+
+	pgxConfig.MaxConns = 25
+	pgxConfig.MaxConnIdleTime = time.Minute * 15
+
+	dbpool, err := pgxpool.New(context.Background(), databaseUrl)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to create connection pool: %v\n", err)
+		return nil, err
+	}
+	defer dbpool.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	err = dbpool.Ping(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to connect to the database: %v\n", err)
+		return nil, err
+	}
+
+	return dbpool, nil
 }
