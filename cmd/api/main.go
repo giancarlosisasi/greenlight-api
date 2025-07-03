@@ -51,6 +51,9 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
+	// make sure to put the defer close in the root of the application
+	// so the db conn is only closed when the app closes
+	defer db.Close()
 	logger.Info("database connection pool established!")
 
 	app := application{
@@ -91,7 +94,6 @@ func openDB(cfg config) (*pgxpool.Pool, error) {
 		fmt.Fprintf(os.Stderr, "unable to create connection pool: %v\n", err)
 		return nil, err
 	}
-	defer dbpool.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

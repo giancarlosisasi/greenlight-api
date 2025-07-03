@@ -1,6 +1,9 @@
 package data
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/giancarlosisasi/greenlight-api/internal/validator"
@@ -8,7 +11,7 @@ import (
 )
 
 type Movie struct {
-	ID        int64     `json:"id"`
+	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"-"`
 	Title     string    `json:"title"`
 	Year      int32     `json:"year,omitzero"`
@@ -45,11 +48,57 @@ func NewMovieModel(db *pgxpool.Pool) MovieModel {
 }
 
 func (m MovieModel) Insert(movie *Movie) error {
-	return nil
+	query := `
+	INSERT INTO movies (title, year, runtime, genres)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, created_at, version
+	`
+
+	err := m.DB.QueryRow(
+		context.Background(),
+		query,
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		movie.Genres,
+	).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+
+	return err
 }
 
 func (m MovieModel) Get(id string) (*Movie, error) {
-	return nil, nil
+	if id == "" {
+		return nil, ErrRecordNotFound
+	}
+
+	query := `
+	SELECT id, created_at, title, year, runtime, genres, version
+	FROM movies
+	WHERE id = $1
+	`
+
+	var movie Movie
+
+	err := m.DB.QueryRow(context.Background(), query, id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		&movie.Genres,
+		&movie.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &movie, nil
 }
 
 func (m MovieModel) Update(movie *Movie) error {
