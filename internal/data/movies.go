@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/giancarlosisasi/greenlight-api/internal/validator"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Movie struct {
@@ -31,4 +32,30 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 	v.Check(len(movie.Genres) >= 1, "genres", "must contain at least 1 genre")
 	v.Check(len(movie.Genres) <= 5, "genres", "must not contain more than 5 genres")
 	v.Check(validator.Unique(movie.Genres), "genres", "must not contain duplicated values")
+}
+
+type MovieModel struct {
+	DB *pgxpool.Pool
+}
+
+func NewMovieModel(db *pgxpool.Pool) MovieModel {
+	return MovieModel{
+		DB: db,
+	}
+}
+
+func (m MovieModel) Insert(movie *Movie) error {
+	return nil
+}
+
+func (m MovieModel) Get(id string) (*Movie, error) {
+	return nil, nil
+}
+
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+func (m MovieModel) Delete(id string) error {
+	return nil
 }

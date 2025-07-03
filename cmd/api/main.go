@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/giancarlosisasi/greenlight-api/internal/data"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -27,6 +28,7 @@ type config struct {
 type application struct {
 	config config
 	logger *slog.Logger
+	models data.Models
 }
 
 func main() {
@@ -44,7 +46,7 @@ func main() {
 		log.Fatal("Error loading the .env file")
 	}
 
-	_, err = openDB(cfg)
+	db, err := openDB(cfg)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -54,6 +56,7 @@ func main() {
 	app := application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	srv := &http.Server{
