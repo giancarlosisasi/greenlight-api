@@ -18,7 +18,13 @@ tasks:
       - migrate -database postgres://postgres:postgres@localhost:5433/greenlightdb?sslmode=disable -path ./migrations up
   migrate:down:
     cmds:
-      - migrate -database postgres://postgres:postgres@localhost:5433/greenlightdb?sslmode=disable -path ./migrations down
+      - migrate -database postgres://postgres:postgres@localhost:5433/greenlightdb?sslmode=disable -path ./migrations down 1
+  migrate:goto:
+    cmds:
+      - migrate -database postgres://postgres:postgres@localhost:5433/greenlightdb?sslmode=disable -path ./migrations goto {{.number}}
+  migrate:version:
+    cmds:
+      - migrate -database postgres://postgres:postgres@localhost:5433/greenlightdb?sslmode=disable -path ./migrations version
   migrate:create:
     cmds:
       - migrate create -ext sql -dir ./migrations -seq {{.name}}
