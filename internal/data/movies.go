@@ -105,7 +105,7 @@ func (m MovieModel) Update(movie *Movie) error {
 	query := `
 	UPDATE movies
 	SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
-	WHERE id = $5
+	WHERE id = $5 and VERSION = $6
 	RETURNING version
 	`
 
@@ -115,9 +115,23 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.Runtime,
 		movie.Genres,
 		movie.ID,
+		movie.Version,
 	}
 
-	return m.DB.QueryRow(context.Background(), query, args...).Scan(&movie.Version)
+	// Execute the SQL query. If no matching row could be found, we know the movie
+	// Version has changed (or the record has been deleted) and we return our custom
+	// ErrEditConflict error
+	err := m.DB.QueryRow(context.Background(), query, args...).Scan(&movie.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m MovieModel) Delete(id string) error {

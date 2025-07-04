@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/giancarlosisasi/greenlight-api/internal/data"
 	"github.com/giancarlosisasi/greenlight-api/internal/validator"
@@ -88,6 +89,11 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	movie, err := app.models.Movies.Get(id)
+	if movie == nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -96,6 +102,15 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 			app.serverErrorResponse(w, r, err)
 		}
 		return
+	}
+
+	// if the request contains a X-Expected-Version header, verify that the movie
+	// version in the database matches the expected version specified in the header
+	if r.Header.Get("X-Expected-Version") != "" {
+		if strconv.Itoa(int(movie.Version)) != r.Header.Get("X-Expected-Version") {
+			app.editConflictResponse(w, r)
+			return
+		}
 	}
 
 	var input struct {
@@ -138,6 +153,11 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	err = app.models.Movies.Update(movie)
 	if err != nil {
+		if errors.Is(err, data.ErrEditConflict) {
+			app.editConflictResponse(w, r)
+			return
+		}
+
 		app.serverErrorResponse(w, r, err)
 		return
 	}
