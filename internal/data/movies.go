@@ -54,8 +54,11 @@ func (m MovieModel) Insert(movie *Movie) error {
 	RETURNING id, created_at, version
 	`
 
+	cxt, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	err := m.DB.QueryRow(
-		context.Background(),
+		cxt,
 		query,
 		movie.Title,
 		movie.Year,
@@ -77,9 +80,15 @@ func (m MovieModel) Get(id string) (*Movie, error) {
 	WHERE id = $1
 	`
 
-	var movie Movie
+	// Use the context.WithTimeout() function to create a context.Context which carries a
+	// 3-second timeout deadline. Note that we're using the empty context.Background()
+	// as the "parent" context
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	// always use defer cancel to make sure the context is canceled before the Get() method returns
+	defer cancel()
 
-	err := m.DB.QueryRow(context.Background(), query, id).Scan(
+	var movie Movie
+	err := m.DB.QueryRow(ctx, query, id).Scan(
 		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
@@ -118,10 +127,13 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.Version,
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// Execute the SQL query. If no matching row could be found, we know the movie
 	// Version has changed (or the record has been deleted) and we return our custom
 	// ErrEditConflict error
-	err := m.DB.QueryRow(context.Background(), query, args...).Scan(&movie.Version)
+	err := m.DB.QueryRow(ctx, query, args...).Scan(&movie.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -144,7 +156,10 @@ func (m MovieModel) Delete(id string) error {
 	WHERE id = $1
 	`
 
-	result, err := m.DB.Exec(context.Background(), query, id)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := m.DB.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}

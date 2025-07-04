@@ -86,7 +86,7 @@ func openDB(cfg config) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	pgxConfig.MaxConns = 25
+	pgxConfig.MaxConns = 1
 	pgxConfig.MaxConnIdleTime = time.Minute * 15
 
 	dbpool, err := pgxpool.New(context.Background(), databaseUrl)
