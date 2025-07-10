@@ -28,3 +28,6 @@ tasks:
   migrate:create:
     cmds:
       - migrate create -ext sql -dir ./migrations -seq {{.name}}
+  load-testing:
+    cmds:
+      - echo "GET http://localhost:4000/v1/healthcheck/" | vegeta attack -duration=1s -rate=10/1s

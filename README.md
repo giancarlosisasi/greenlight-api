@@ -1,2 +1,2 @@
 A project created by following the book: https://lets-go-further.alexedwards.net/
-- file:///D:/Books/Lets%20go%20further/lets-go-further.html/lets-go-further.html/09.00-filtering-sorting-and-pagination.html
+

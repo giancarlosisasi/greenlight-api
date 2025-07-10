@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/giancarlosisasi/greenlight-api/internal/data"
@@ -22,6 +23,12 @@ type config struct {
 	env  string
 	db   struct {
 		dsn string
+	}
+
+	limiter struct {
+		rps     float64
+		burst   int
+		enabled bool
 	}
 }
 
@@ -44,6 +51,25 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading the .env file")
+	}
+
+	// rate limit default values
+	cfg.limiter.enabled = os.Getenv("LIMITER_ENABLED") == "true"
+	cfg.limiter.rps = 2
+	cfg.limiter.burst = 4
+	rps := os.Getenv("LIMITER_RPS")
+	rpsI, err := strconv.Atoi(rps)
+	if err == nil {
+		cfg.limiter.rps = float64(rpsI)
+	} else {
+		logger.Warn(fmt.Sprintf("> invalid integer value for env var %s", "LIMITER_RPS"))
+	}
+	burst := os.Getenv("LIMITER_BURST")
+	burstI, err := strconv.Atoi(burst)
+	if err == nil {
+		cfg.limiter.burst = burstI
+	} else {
+		logger.Warn(fmt.Sprintf("> invalid integer value for env var %s", "LIMITER_BURST"))
 	}
 
 	db, err := openDB(cfg)
