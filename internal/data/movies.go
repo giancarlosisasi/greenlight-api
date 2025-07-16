@@ -42,8 +42,8 @@ type MovieModel struct {
 	DB *pgxpool.Pool
 }
 
-func NewMovieModel(db *pgxpool.Pool) MovieModel {
-	return MovieModel{
+func NewMovieModel(db *pgxpool.Pool) *MovieModel {
+	return &MovieModel{
 		DB: db,
 	}
 }
