@@ -8,9 +8,11 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/giancarlosisasi/greenlight-api/internal/data"
+	"github.com/giancarlosisasi/greenlight-api/internal/mailer"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -29,12 +31,21 @@ type config struct {
 		burst   int
 		enabled bool
 	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 type application struct {
 	config config
 	logger *slog.Logger
 	models data.Models
+	mailer *mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -51,6 +62,21 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading the .env file")
 	}
+
+	smtpPortStr := os.Getenv("SMTP_PORT")
+	smtpPort, err := strconv.Atoi(smtpPortStr)
+	if err != nil {
+		logger.Error(fmt.Sprintf("error to parse the smtp port, current value is: %s", smtpPortStr))
+		panic(fmt.Sprintf("SMTP Port is an invalid int value: %s", smtpPortStr))
+	}
+	// create the mailer
+	mailer := mailer.NewDialer(
+		os.Getenv("SMTP_HOST"),
+		smtpPort,
+		os.Getenv("SMTP_USERNAME"),
+		os.Getenv("SMTP_PASSWORD"),
+		os.Getenv("SMTP_SENDER"),
+	)
 
 	// rate limit default values
 	cfg.limiter.enabled = os.Getenv("LIMITER_ENABLED") == "true"
@@ -85,6 +111,7 @@ func main() {
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer,
 	}
 
 	err = app.serve()
