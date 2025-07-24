@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+
+	// _ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +15,11 @@ import (
 )
 
 func (app *application) serve() error {
+	// go func() {
+	// 	log.Println("pprof server starting on :6060")
+	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
+	// }()
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.config.port),
 		Handler:      app.routes(),
