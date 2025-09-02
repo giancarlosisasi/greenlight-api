@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/giancarlosisasi/greenlight-api/internal/validator"
@@ -241,6 +242,8 @@ func (m *UserModel) GetForToken(tokenScope string, tokenPlainText string) (*User
 		&user.Activated,
 		&user.Version,
 	)
+
+	fmt.Printf("Error to get token: %s\n", err.Error())
 
 	if err != nil {
 		switch {
