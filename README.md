@@ -20,3 +20,5 @@ go func() {
 	log.Println(http.ListenAndServe("localhost:6060", nil))
 }()
 ```
+
+continue: file:///D:/Books/golang/Lets%20go%20further/lets-go-further.html/lets-go-further.html/16.01-requiring-user-activation.html # Splitting up the middleware
