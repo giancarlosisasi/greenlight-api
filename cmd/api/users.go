@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -107,7 +106,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	user, err := app.models.Users.GetForToken(data.ScopeActivation, input.TokenPlaintext)
-	app.logger.Debug(fmt.Sprintf("user: %v and error: %v", user, err))
+
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
