@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -238,4 +239,43 @@ func (app *application) requirePermissions(code string, next http.HandlerFunc) h
 	}
 
 	return app.requireActivatedUser(fn)
+}
+
+func (app *application) enableCORS(next http.Handler) http.Handler {
+	trustedOrigins := []string{
+		"http://localhost:9000",
+		"http://localhost:9002",
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Origin")
+		w.Header().Add("Vary", "Access-Control-Request-Method")
+
+		origin := r.Header.Get("Origin")
+
+		if origin == "" {
+			next.ServeHTTP(w, r)
+		}
+
+		if slices.Contains(trustedOrigins, origin) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+
+			// CHeck if the request hast the HTTP method OPTIONS and contains the
+			// "Access-Control-Request-Method" header. If it does, then we treat
+			// it as a preflight request.
+			if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+				// Set the necessary preflight response headers
+				w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
+				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+
+				// write the headers along with a 200 ok status and return from
+				// the middleware with no further action
+				// set 200 ok and not 204 because some browsers doesn't support 204 code
+				w.WriteHeader(http.StatusOK)
+			}
+		}
+
+		next.ServeHTTP(w, r)
+
+	})
 }
