@@ -255,6 +255,7 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 
 		if origin == "" {
 			next.ServeHTTP(w, r)
+			return
 		}
 
 		if slices.Contains(trustedOrigins, origin) {
