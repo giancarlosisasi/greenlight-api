@@ -1,0 +1,70 @@
+# Ignore environment and configuration files
+.env
+.env.*
+*.env
+config.local.*
+secrets.*
+
+# Ignore development and build artifacts
+tmp/
+*.exe
+*.log
+*.tmp
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Ignore version control
+.git/
+.gitignore
+
+# Ignore documentation
+README.md
+*.md
+docs/
+
+# Ignore test files
+*_test.go
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore Docker files (not needed for source deployment)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Ignore CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Ignore local data and databases
+postgres-data/
+*.db
+*.sqlite
+
+# Ignore node_modules if you have any frontend assets
+node_modules/
+
+# Ignore examples and development-only directories
+examples/
+remote/
+
+# Ignore backup files
+*.bak
+*.backup
+
+# Ignore logs
+logs/
+*.log

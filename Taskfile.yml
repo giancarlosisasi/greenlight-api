@@ -31,3 +31,6 @@ tasks:
   load-testing:
     cmds:
       - echo "GET http://localhost:4000/v1/healthcheck/" | vegeta attack -duration=1s -rate=10/1s
+  deploy:production:
+    cmds:
+      - gcloud run deploy greenlight-api --source . --set-env-vars "GOOGLE_BUILDABLE=./cmd/api"

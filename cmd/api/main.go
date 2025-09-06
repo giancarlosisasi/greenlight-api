@@ -51,19 +51,30 @@ type application struct {
 }
 
 func main() {
+	// load env vars
+	err := godotenv.Load()
+	if err != nil {
+		log.Print("Error loading the .env file")
+	}
+
 	var cfg config
 
-	flag.IntVar(&cfg.port, "port", 4000, "API server port")
+	// get the default port value from env var
+	portStr := os.Getenv("PORT")
+	if portStr != "" {
+		portInt, err := strconv.Atoi(portStr)
+		if err != nil {
+			log.Fatal("Error to parse the port value")
+		}
+		cfg.port = portInt
+	} else {
+		flag.IntVar(&cfg.port, "port", 4000, "API server port")
+	}
+
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	// load env vars
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading the .env file")
-	}
 
 	smtpPortStr := os.Getenv("SMTP_PORT")
 	smtpPort, err := strconv.Atoi(smtpPortStr)
