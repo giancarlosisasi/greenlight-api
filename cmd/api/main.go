@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"expvar"
 	"flag"
 	"fmt"
 	"log"
 	"log/slog"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -106,6 +108,31 @@ func main() {
 	// so the db conn is only closed when the app closes
 	defer db.Close()
 	logger.Info("database connection pool established!")
+
+	expvar.NewString("version").Set(version)
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
+	expvar.Publish("database", expvar.Func(func() any {
+		stats := db.Stat()
+		return map[string]interface{}{
+			"acquired_conns":             stats.AcquiredConns(),
+			"canceled_acquire_count":     stats.CanceledAcquireCount(),
+			"constructing_conns":         stats.ConstructingConns(),
+			"empty_acquire_count":        stats.EmptyAcquireCount(),
+			"idle_conns":                 stats.IdleConns(),
+			"max_conns":                  stats.MaxConns(),
+			"total_conns":                stats.TotalConns(),
+			"new_conns_count":            stats.NewConnsCount(),
+			"max_lifetime_destroy_count": stats.MaxLifetimeDestroyCount(),
+			"max_idle_destroy_count":     stats.MaxIdleDestroyCount(),
+		}
+	}))
+
+	expvar.Publish("timestamp", expvar.Func(func() any {
+		return time.Now().Unix()
+	}))
 
 	app := application{
 		config: cfg,

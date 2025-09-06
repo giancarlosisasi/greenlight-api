@@ -31,9 +31,11 @@ func (app *application) routes() http.Handler {
 
 	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
 
-	return app.recoverPanic(
-		app.enableCORS(
-			app.rateLimit(app.authenticate(app.realIP(router))),
+	return app.metrics(
+		app.recoverPanic(
+			app.enableCORS(
+				app.rateLimit(app.authenticate(app.realIP(router))),
+			),
 		),
 	)
 }
