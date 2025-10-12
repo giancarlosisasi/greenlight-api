@@ -275,6 +275,7 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 				// the middleware with no further action
 				// set 200 ok and not 204 because some browsers doesn't support 204 code
 				w.WriteHeader(http.StatusOK)
+				return
 			}
 		}
 
